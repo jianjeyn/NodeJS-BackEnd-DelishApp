@@ -19,7 +19,7 @@ const homePageController = require('../controllers/homePage.controller');
 const searchController = require('../controllers/searchController');
 const trendingController = require('../controllers/trendingController');
 const verifyToken = require('../middleware/verifyToken');
-
+const reviewRoutes = require('./reviewRoutes');
 
 // Gunakan router berdasarkan prefix URL
 router.use('/auth', authRoutes);
@@ -34,5 +34,8 @@ router.get('/search', searchController.searchPage);
 router.get('/trending', trendingController.index);
 router.get('/trending/:id', trendingController.show);
 
+// Review routes - MOUNTING LANGSUNG tanpa prefix tambahan
+// Karena reviewRoutes sudah handle pattern /recipes/:recipeId/reviews
+router.use('/', reviewRoutes);
 
 module.exports = router;
