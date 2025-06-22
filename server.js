@@ -7,7 +7,7 @@ const app = express();
 // MIDDLEWARE SETUP
 // ============================================
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://10.0.2.2:3000'], // Flutter/Emulator
+  origin: ['http://localhost:3000', 'http://10.0.2.2:3000'], // Flutter emulator & Web
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -24,29 +24,60 @@ if (process.env.NODE_ENV === 'development') {
 // ============================================
 // ROUTES SETUP
 // ============================================
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const productRoutes = require('./routes/products');
+const indexRoutes = require('./src/routes/index'); // <= ini wajib!
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api', indexRoutes);
 
-// Root endpoint
+// ============================================
+// ROOT ENDPOINT
+// ============================================
 app.get('/', (req, res) => {
   res.json({
     message: 'Flutter Backend API is running! 🚀',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     endpoints: {
-      auth: ['POST /api/auth/register', 'POST /api/auth/login', 'GET /api/auth/profile'],
-      users: ['GET /api/users', 'PUT /api/users/profile'],
-      products: ['GET /api/products', 'POST /api/products', 'PUT /api/products/:id', 'DELETE /api/products/:id']
+      auth: [
+        'POST /api/auth/register',
+        'POST /api/auth/login',
+        'GET /api/auth/profile'
+      ],
+      profile: [
+        'GET /api/profile',
+        'PUT /api/profile'
+      ],
+      recipes: [
+        'GET /api/recipes',
+        'GET /api/recipes/:id',
+        'POST /api/recipes',
+        'PUT /api/recipes/:id',
+        'DELETE /api/recipes/:id'
+      ],
+      communities: [
+        'GET /api/communities',
+        'GET /api/communities/:id'
+      ],
+      notifications: [
+        'GET /api/notifications',
+        'POST /api/notifications'
+      ],
+      home: [
+        'GET /api/home'
+      ],
+      search: [
+        'GET /api/search'
+      ],
+      trending: [
+        'GET /api/trending',
+        'GET /api/trending/:id'
+      ]
     }
   });
 });
 
-// Health check
+// ============================================
+// HEALTH CHECK
+// ============================================
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -58,7 +89,7 @@ app.get('/health', (req, res) => {
 // ============================================
 // ERROR HANDLING
 // ============================================
-// 404
+// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     message: 'Route not found',
@@ -66,7 +97,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// Global error
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
 
