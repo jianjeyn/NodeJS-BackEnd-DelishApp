@@ -10,10 +10,12 @@ app.use(cors());
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const homeRoutes = require('./routes/home');
 
 // Gunakan routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/home', homeRoutes);
 
 // Route utama
 app.get('/', (req, res) => {
@@ -23,7 +25,8 @@ app.get('/', (req, res) => {
     endpoints: [
       'POST /api/auth/login',
       'POST /api/auth/register',
-      'GET /api/users/profile'
+      'GET /api/users/profile',
+      'GET /api/home'
     ]
   });
 });
