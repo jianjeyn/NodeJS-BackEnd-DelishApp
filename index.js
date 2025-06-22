@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { connectDB, disconnectDB, prisma } = require('./config/database');
+const { connectDB, disconnectDB, executeQuery } = require('./config/database');
 
 // Load environment variables
 dotenv.config();
@@ -25,8 +25,7 @@ app.get('/', (req, res) => {
 // Health check route
 app.get('/health', async (req, res) => {
   try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`;
+    const result = await executeQuery('SELECT 1 as status');
     res.json({
       status: 'OK',
       database: 'Connected',
@@ -36,7 +35,8 @@ app.get('/health', async (req, res) => {
     res.status(500).json({
       status: 'Error',
       database: 'Disconnected',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      error: error.message
     });
   }
 });
@@ -44,15 +44,9 @@ app.get('/health', async (req, res) => {
 // Test route untuk ambil data users
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        created_at: true
-      }
-    });
+    const users = await executeQuery(
+      'SELECT id, name, email, username, created_at FROM users'
+    );
     res.json({
       success: true,
       data: users
@@ -84,7 +78,11 @@ app.use((req, res) => {
 // Start server
 async function startServer() {
   try {
-    await connectDB();
+    const connected = await connectDB();
+    if (!connected) {
+      console.error('Failed to connect to database');
+      process.exit(1);
+    }
     
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
