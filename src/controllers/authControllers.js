@@ -80,7 +80,7 @@ const register = async (req, res) => {
         foto, 
         created_at, 
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
 
     const result = await executeQuery(insertUserQuery, [
