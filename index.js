@@ -1,7 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { connectDB, disconnectDB, executeQuery } = require('./config/database');
+const {
+  connectDB,
+  disconnectDB,
+  executeQuery
+} = require('./config/database');
 
 // Load environment variables
 dotenv.config();
@@ -13,6 +17,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// === [ ROUTER UTAMA ] ===
+const mainRouter = require('./src/routes');
+app.use('/api', mainRouter); // ⬅️ Semua route utama di bawah /api
 
 // Basic route
 app.get('/', (req, res) => {
@@ -41,37 +49,19 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Test route untuk ambil data users
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await executeQuery(
-      'SELECT id, name, email, username, created_at FROM users'
-    );
-    res.json({
-      success: true,
-      data: users
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
+// 404 handler (for unmatched API routes)
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found'
+  });
 });
 
-// Error handling middleware
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
     message: err.message
-  });
-});
-
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Route not found'
   });
 });
 
@@ -83,7 +73,7 @@ async function startServer() {
       console.error('Failed to connect to database');
       process.exit(1);
     }
-    
+
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });

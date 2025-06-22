@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database'); // Assuming your database connection is in config/database.js
+const { sequelize } = require('../../config/database'); // Assuming your database connection is in config/database.js
 
 const Notification = sequelize.define('Notification', {
     id: {
