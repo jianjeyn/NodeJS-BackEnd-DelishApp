@@ -26,8 +26,6 @@ const register = async (req, res) => {
       tanggal_lahir,
       password,
       gender,
-      presentation,
-      add_link
     } = req.body;
 
     console.log('📝 Registering new user:', { name, email });
@@ -78,8 +76,6 @@ const register = async (req, res) => {
         password, 
         gender, 
         foto, 
-        presentation, 
-        add_link, 
         created_at, 
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
@@ -93,13 +89,11 @@ const register = async (req, res) => {
       hashedPassword,
       genderCode,
       fotoPath,
-      presentation || null,
-      add_link || null
     ]);
 
     // Get created user
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
@@ -153,7 +147,7 @@ const login = async (req, res) => {
 
     // Find user by email
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, password, created_at, updated_at
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, password, created_at, updated_at
       FROM users 
       WHERE email = ?
     `;
@@ -216,7 +210,7 @@ const getUser = async (req, res) => {
     console.log('👤 Getting user data for ID:', userId);
 
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
