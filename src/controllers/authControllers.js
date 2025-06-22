@@ -1,16 +1,18 @@
-const { User } = require('../models');
+const { executeQuery } = require('../../config/database');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
+const path = require('path');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Register function
+console.log('🔍 Loading authControllers...');
+
+// Register function - sesuai dengan PHP: UserController::register
 const register = async (req, res) => {
-  
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({
+    return res.status(422).json({
       status: 'fail',
       errors: errors.array()
     });
@@ -20,7 +22,6 @@ const register = async (req, res) => {
     const {
       name,
       email,
-      username,
       no_hp,
       tanggal_lahir,
       password,
@@ -29,65 +30,104 @@ const register = async (req, res) => {
       add_link
     } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      where: { 
-        [require('sequelize').Op.or]: [
-          { email: email.toLowerCase() },
-          { username }
-        ]
-      }
-    });
+    console.log('📝 Registering new user:', { name, email });
 
-    if (existingUser) {
-      return res.status(400).json({
+    // Check if user already exists - sesuai dengan validasi PHP: unique:users,email dan unique:users,no_hp
+    const existingUserQuery = `
+      SELECT id, email, no_hp 
+      FROM users 
+      WHERE email = ? OR no_hp = ?
+    `;
+    
+    const existingUser = await executeQuery(existingUserQuery, [email.toLowerCase(), no_hp]);
+
+    if (existingUser && existingUser.length > 0) {
+      const user = existingUser[0];
+      let message = '';
+      if (user.email === email.toLowerCase()) {
+        message = 'Email sudah terdaftar';
+      } else if (user.no_hp === no_hp) {
+        message = 'Nomor HP sudah terdaftar';
+      }
+      
+      return res.status(422).json({
         status: 'fail',
-        message: 'Email atau username sudah terdaftar'
+        message: message
       });
     }
 
-    // Handle foto upload
+    // Handle foto upload - sesuai dengan PHP: store('user_foto', 'public')
     let fotoPath = null;
     if (req.file) {
-      fotoPath = `/uploads/avatars/${req.file.filename}`;
+      fotoPath = `/uploads/user_foto/${req.file.filename}`;
     }
 
-    // Create user
-    const user = await User.create({
+    // Hash password - sesuai dengan PHP: Hash::make($request->password)
+    const hashedPassword = await bcryptjs.hash(password, 12);
+
+    // Convert gender - sesuai dengan PHP validation: in:male,female
+    const genderCode = gender === 'male' ? 'L' : gender === 'female' ? 'P' : gender;
+
+    // Insert user ke database - sesuai dengan PHP: User::create()
+    const insertUserQuery = `
+      INSERT INTO users (
+        name, 
+        email, 
+        no_hp, 
+        tanggal_lahir, 
+        password, 
+        gender, 
+        foto, 
+        presentation, 
+        add_link, 
+        created_at, 
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `;
+
+    const result = await executeQuery(insertUserQuery, [
       name,
-      email: email.toLowerCase(),
-      username,
+      email.toLowerCase(),
       no_hp,
       tanggal_lahir,
-      password,
-      gender,
-      foto: fotoPath,
-      presentation,
-      add_link
-    });
+      hashedPassword,
+      genderCode,
+      fotoPath,
+      presentation || null,
+      add_link || null
+    ]);
 
-    // Generate token
+    // Get created user
+    const getUserQuery = `
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      FROM users 
+      WHERE id = ?
+    `;
+    
+    const newUser = await executeQuery(getUserQuery, [result.insertId]);
+    const user = newUser[0];
+
+    // Generate token (opsional, sesuaikan dengan kebutuhan)
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, name: user.name },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Remove password from response
-    const userResponse = { ...user.toJSON() };
-    delete userResponse.password;
+    console.log(`✅ User registered successfully: ${user.name} (ID: ${user.id})`);
 
+    // Response format sama persis dengan PHP
     res.status(201).json({
       status: 'success',
       message: 'Registrasi berhasil',
       data: {
-        user: userResponse,
-        token
+        user: user,
+        token: token // Optional, bisa dihilangkan jika tidak diperlukan
       }
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan saat registrasi',
@@ -100,7 +140,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ 
+    return res.status(422).json({ 
       status: 'fail',
       errors: errors.array() 
     });
@@ -109,19 +149,28 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ 
-      where: { email: email.toLowerCase() } 
-    });
+    console.log('🔐 Login attempt for email:', email);
 
-    if (!user) {
+    // Find user by email
+    const getUserQuery = `
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, password, created_at, updated_at
+      FROM users 
+      WHERE email = ?
+    `;
+    
+    const userResult = await executeQuery(getUserQuery, [email.toLowerCase()]);
+
+    if (!userResult || userResult.length === 0) {
       return res.status(401).json({ 
         status: 'fail',
         message: 'Email atau password salah' 
       });
     }
 
-    // Use the comparePassword method from User model
-    const isMatch = await user.comparePassword(password);
+    const user = userResult[0];
+
+    // Verify password
+    const isMatch = await bcryptjs.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ 
         status: 'fail',
@@ -129,6 +178,7 @@ const login = async (req, res) => {
       });
     }
 
+    // Generate token
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name },
       JWT_SECRET,
@@ -136,23 +186,25 @@ const login = async (req, res) => {
     );
 
     // Remove password from response
-    const userResponse = { ...user.toJSON() };
-    delete userResponse.password;
+    delete user.password;
+
+    console.log(`✅ User logged in successfully: ${user.name} (ID: ${user.id})`);
 
     res.status(200).json({
       status: 'success',
       message: 'Login berhasil',
       data: {
-        user: userResponse,
-        token
+        user: user,
+        token: token
       }
     });
-  } catch (err) {
-    console.error('Login error:', err);
+
+  } catch (error) {
+    console.error('❌ Login error:', error);
     res.status(500).json({ 
       status: 'error',
       message: 'Terjadi kesalahan server', 
-      error: err.message 
+      error: error.message 
     });
   }
 };
@@ -160,23 +212,33 @@ const login = async (req, res) => {
 // Get User function
 const getUser = async (req, res) => {
   try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] }
-    });
+    const userId = req.user.id;
+    console.log('👤 Getting user data for ID:', userId);
 
-    if (!user) {
+    const getUserQuery = `
+      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      FROM users 
+      WHERE id = ?
+    `;
+    
+    const userResult = await executeQuery(getUserQuery, [userId]);
+
+    if (!userResult || userResult.length === 0) {
       return res.status(404).json({
         status: 'fail',
         message: 'User tidak ditemukan'
       });
     }
 
+    const user = userResult[0];
+
     res.json({ 
       status: 'success',
       data: { user } 
     });
+
   } catch (error) {
-    console.error('Get user error:', error);
+    console.error('❌ Get user error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan server',
@@ -197,7 +259,7 @@ const logout = async (req, res) => {
 const changePassword = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({
+    return res.status(422).json({
       status: 'fail',
       errors: errors.array()
     });
@@ -205,17 +267,30 @@ const changePassword = async (req, res) => {
 
   try {
     const { oldPassword, newPassword } = req.body;
-    const user = await User.findByPk(req.user.id);
+    const userId = req.user.id;
 
-    if (!user) {
+    console.log('🔑 Changing password for user ID:', userId);
+
+    // Get user with password
+    const getUserQuery = `
+      SELECT id, password 
+      FROM users 
+      WHERE id = ?
+    `;
+    
+    const userResult = await executeQuery(getUserQuery, [userId]);
+
+    if (!userResult || userResult.length === 0) {
       return res.status(404).json({
         status: 'fail',
         message: 'User tidak ditemukan'
       });
     }
 
+    const user = userResult[0];
+
     // Verify old password
-    const isMatch = await user.comparePassword(oldPassword);
+    const isMatch = await bcryptjs.compare(oldPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({
         status: 'fail',
@@ -223,8 +298,19 @@ const changePassword = async (req, res) => {
       });
     }
 
+    // Hash new password
+    const hashedNewPassword = await bcryptjs.hash(newPassword, 12);
+
     // Update password
-    await user.update({ password: newPassword });
+    const updatePasswordQuery = `
+      UPDATE users 
+      SET password = ?, updated_at = NOW() 
+      WHERE id = ?
+    `;
+    
+    await executeQuery(updatePasswordQuery, [hashedNewPassword, userId]);
+
+    console.log(`✅ Password changed successfully for user ID: ${userId}`);
 
     res.json({
       status: 'success',
@@ -232,7 +318,7 @@ const changePassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('❌ Change password error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Terjadi kesalahan server',
@@ -241,7 +327,7 @@ const changePassword = async (req, res) => {
   }
 };
 
-// Forgot Password function
+// Forgot Password function (placeholder)
 const forgotPassword = async (req, res) => {
   res.json({ 
     status: 'success',
@@ -249,7 +335,7 @@ const forgotPassword = async (req, res) => {
   });
 };
 
-// Reset Password function
+// Reset Password function (placeholder)
 const resetPassword = async (req, res) => {
   res.json({ 
     status: 'success',
@@ -267,3 +353,5 @@ module.exports = {
   forgotPassword,
   resetPassword
 };
+
+console.log('✅ authControllers functions defined');
