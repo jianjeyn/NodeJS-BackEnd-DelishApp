@@ -21,6 +21,7 @@ const register = async (req, res) => {
   try {
     const {
       name,
+      username,
       email,
       no_hp,
       tanggal_lahir,
@@ -70,6 +71,7 @@ const register = async (req, res) => {
     const insertUserQuery = `
       INSERT INTO users (
         name, 
+        username,
         email, 
         no_hp, 
         tanggal_lahir, 
@@ -83,6 +85,7 @@ const register = async (req, res) => {
 
     const result = await executeQuery(insertUserQuery, [
       name,
+      username,
       email.toLowerCase(),
       no_hp,
       tanggal_lahir,
@@ -93,7 +96,7 @@ const register = async (req, res) => {
 
     // Get created user
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
+      SELECT id, name, username, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
@@ -147,7 +150,7 @@ const login = async (req, res) => {
 
     // Find user by email
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, password, created_at, updated_at
+      SELECT id, name, username, email, no_hp, tanggal_lahir, gender, foto, password, created_at, updated_at
       FROM users 
       WHERE email = ?
     `;
@@ -210,7 +213,7 @@ const getUser = async (req, res) => {
     console.log('👤 Getting user data for ID:', userId);
 
     const getUserQuery = `
-      SELECT id, name, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
+      SELECT id, name, username, email, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;

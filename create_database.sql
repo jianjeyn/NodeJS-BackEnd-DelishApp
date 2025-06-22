@@ -22,8 +22,6 @@ CREATE TABLE `users` (
   `password` VARCHAR(255) NOT NULL,
   `gender` CHAR(1) NULL,
   `foto` VARCHAR(255) NULL,
-  `presentation` TEXT NULL,
-  `add_link` VARCHAR(255) NULL,
   `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
@@ -148,7 +146,7 @@ SET FOREIGN_KEY_CHECKS=1;
 -- Seeding untuk tabel 'users'
 INSERT INTO `users` (`name`, `email`, `username`, `no_hp`, `tanggal_lahir`, `password`, `gender`, `foto`) VALUES
 ('Alifa Salsabila', 'alifa1@example.com', 'alifabee', '081234567890', '2002-05-15', '$2a$12$eyAmZQThBEOz/BBBn/H18O8alngb/XXBdppaigsHL3HhMplyRXx3m', 'P', 'avatars/alifa.jpg'),
-('Klara Oliviera', 'klara1@example.com', 'klarakeren', '081298765432', '2001-11-25', '$2a$12$qylmw4WQ9ZatnqB4AMq7X.MmVe3xzpOhe8f2V/QaQ63YDybg1sCCi', 'P', 'avatars/klara.jpg'),
+('Klara Oliviera', 'klara1@example.com', 'klarakeren', '081298765432', '2001-11-25', '$2a$12$eRbwWj/JKVXBbDq7Nl3/7Of9rWEqlaHp0Yt8tEo/1aFSIeSrxUW4y', 'P', 'avatars/klara.jpg'),
 ('Naeya Adeani', 'naeya1@example.com', 'notnaex', '082112345678', '2003-02-10', '$2a$12$qHZ9801mAm3YGnntPCGemeofmeOgGwohvRVhV1FbM1gpzH18HgdWm', 'P', 'avatars/naeya.jpg'),
 ('Jihan Aqilah', 'jihan1@example.com', 'jianjeyn', '082234567890', '2004-02-10', '$2a$12$5UpKopDFqU35RCMFoPNTueszM5V.HEFi8iiBJPH52k0Ii/abhtCFe', 'P', 'avatars/jihan.jpg'),
 ('Ririn Marcelina', 'ririn1@example.com', 'marchrin', '082345678901', '2002-03-15', '$2a$12$ZZkLk9Lnnzt.nL8UvFOuE.3BxzU5dapalpx3lYbZaTNWTNKK1Hbzy', 'P', 'avatars/ririn.jpg'),
