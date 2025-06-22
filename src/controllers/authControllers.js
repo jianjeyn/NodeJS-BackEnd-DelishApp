@@ -5,7 +5,8 @@ const { validationResult } = require('express-validator');
 const nodemailer = require('nodemailer');
 
 // Ganti ini dengan secret token kamu
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+// const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
   const errors = validationResult(req);
