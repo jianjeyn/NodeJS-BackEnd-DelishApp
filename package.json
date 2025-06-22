@@ -1,0 +1,39 @@
+{
+  "name": "nodejs-backend-delishapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jianjeyn/NodeJS-BackEnd-DelishApp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jianjeyn/NodeJS-BackEnd-DelishApp/issues"
+  },
+  "homepage": "https://github.com/jianjeyn/NodeJS-BackEnd-DelishApp#readme",
+  "devDependencies": {
+    "package-name": "^0.1.0",
+    "prisma": "^6.10.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.1",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1"
+  }
+}
