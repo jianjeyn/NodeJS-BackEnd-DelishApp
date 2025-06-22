@@ -97,6 +97,13 @@ exports.index = async (req, res) => {
 
     // Response format sama persis dengan PHP
     res.json({
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        username: req.user.username,
+        foto: req.user.foto
+      },
       categories,
       filtered: formatRecipes(filteredRecipes),
       trending: formatRecipes(trending),
