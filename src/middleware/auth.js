@@ -1,22 +1,27 @@
-// middleware/auth.js
 const jwt = require('jsonwebtoken');
 
-// Middleware untuk verifikasi token
-module.exports = function (req, res, next) {
-  // Ambil token dari header Authorization
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer token
+const verifyToken = (req, res, next) => {
+  const authHeader = req.header('Authorization');
 
-  if (!token) {
-    return res.status(401).json({ message: 'Token tidak ditemukan' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      status: 'fail',
+      message: 'Akses ditolak. Token tidak disediakan atau format salah.' 
+    });
   }
+
+  const token = authHeader.split(' ')[1];
 
   try {
-    const secret = process.env.JWT_SECRET;
-    const decoded = jwt.verify(token, secret);
-    req.user = decoded; // Simpan data user yang sudah di-decode ke request
-    next(); // Lanjut ke controller
-  } catch (err) {
-    return res.status(403).json({ message: 'Token tidak valid' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(403).json({ 
+      status: 'fail',
+      message: 'Token tidak valid.' 
+    });
   }
 };
+
+module.exports = verifyToken;

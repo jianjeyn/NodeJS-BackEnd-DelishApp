@@ -11,26 +11,33 @@ const CommunityUser = sequelize.define('CommunityUser', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'community', // refers to table name
-            key: 'id',
+            model: 'community',
+            key: 'id'
         }
     },
     user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'users', // refers to table name
-            key: 'id',
+            model: 'users',
+            key: 'id'
         }
     }
 }, {
-    tableName: 'community_user', // Explicit table name as in Laravel
-    timestamps: false // Assuming no timestamps for pivot table unless explicitly handled
+    tableName: 'community_user',
+    timestamps: false
 });
 
 CommunityUser.associate = (models) => {
-    CommunityUser.belongsTo(models.Community, { foreignKey: 'community_id' });
-    CommunityUser.belongsTo(models.User, { foreignKey: 'user_id' });
+    CommunityUser.belongsTo(models.Community, {
+        foreignKey: 'community_id',
+        as: 'community'
+    });
+    
+    CommunityUser.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        as: 'user'
+    });
 };
 
 module.exports = CommunityUser;

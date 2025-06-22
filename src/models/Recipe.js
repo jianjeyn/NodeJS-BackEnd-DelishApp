@@ -3,9 +3,17 @@ const { sequelize } = require('../../config/database');
 
 const Recipe = sequelize.define('Recipe', {
     id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BIGINT.UNSIGNED,
         primaryKey: true,
         autoIncrement: true
+    },
+    user_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: false,
+        references: {
+            model: 'users',
+            key: 'id',
+        }
     },
     nama: {
         type: DataTypes.STRING,
@@ -20,44 +28,64 @@ const Recipe = sequelize.define('Recipe', {
         allowNull: true
     },
     durasi: {
-        type: DataTypes.STRING, // Assuming string like "30 menit"
+        type: DataTypes.STRING(50),
         allowNull: true
     },
     kategori: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(100),
         allowNull: true
     },
     jenis_hidangan: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(100),
         allowNull: true
     },
-    estimasi_waktu: { // 'estimasi_waktu' from Laravel model
-        type: DataTypes.STRING,
+    estimasi_waktu: {
+        type: DataTypes.STRING(50),
         allowNull: true
     },
-    tingkat_kesulitan: { // 'tingkat_kesulitan' from Laravel model
-        type: DataTypes.STRING,
+    tingkat_kesulitan: {
+        type: DataTypes.STRING(50),
         allowNull: true
-    },
-    user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'users',
-            key: 'id',
-        }
     }
 }, {
     tableName: 'recipes',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     timestamps: true
 });
 
 Recipe.associate = (models) => {
-    Recipe.hasMany(models.Step, { foreignKey: 'resep_id' });
-    Recipe.hasMany(models.Review, { foreignKey: 'resep_id' });
-    Recipe.belongsToMany(models.User, { through: models.Favorite, foreignKey: 'recipe_id', otherKey: 'user_id' });
-    Recipe.belongsTo(models.User, { foreignKey: 'user_id' });
-    Recipe.hasMany(models.Ingredient, { foreignKey: 'recipe_id' });
+    // Recipe belongs to User
+    Recipe.belongsTo(models.User, { 
+        foreignKey: 'user_id',
+        as: 'user'
+    });
+    
+    // Recipe has many Steps
+    Recipe.hasMany(models.Step, { 
+        foreignKey: 'recipe_id',
+        as: 'steps'
+    });
+    
+    // Recipe has many Reviews
+    Recipe.hasMany(models.Review, { 
+        foreignKey: 'recipe_id',
+        as: 'reviews'
+    });
+    
+    // Recipe has many Ingredients
+    Recipe.hasMany(models.Ingredient, { 
+        foreignKey: 'recipe_id',
+        as: 'ingredients'
+    });
+    
+    // Recipe belongs to many Users through Favorites
+    Recipe.belongsToMany(models.User, { 
+        through: models.Favorite, 
+        foreignKey: 'recipe_id', 
+        otherKey: 'user_id',
+        as: 'favoriteUsers'
+    });
 };
 
 module.exports = Recipe;

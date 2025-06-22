@@ -1,11 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const {
-  connectDB,
-  disconnectDB,
-  executeQuery
-} = require('./config/database');
+const path = require('path');
+const { connectDB, disconnectDB, executeQuery, sequelize } = require('./config/database');
 
 // Load environment variables
 dotenv.config();
@@ -18,25 +15,47 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// === [ ROUTER UTAMA ] ===
-const mainRouter = require('./src/routes');
-app.use('/api', mainRouter); // ⬅️ Semua route utama di bawah /api
+// Static files untuk uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Basic route
+// Import main router yang sudah menggabungkan semua routes
+const apiRoutes = require('./src/routes/index');
+
+// Basic routes
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to DelishApp API',
-    status: 'Server is running'
+    status: 'Server is running',
+    endpoints: {
+      auth: '/api/auth',
+      recipes: '/api/recipes',
+      users: '/api/users', 
+      profile: '/api/profile',
+      communities: '/api/communities',
+      notifications: '/api/notifications',
+      reviews: '/api/reviews',
+      home: '/api/home',
+      search: '/api/search',
+      trending: '/api/trending',
+      review: '/api/reviews',
+    }
   });
 });
 
 // Health check route
 app.get('/health', async (req, res) => {
   try {
+    // Test MySQL2
     const result = await executeQuery('SELECT 1 as status');
+    // Test Sequelize
+    await sequelize.authenticate();
+    
     res.json({
       status: 'OK',
-      database: 'Connected',
+      database: {
+        mysql2: 'Connected',
+        sequelize: 'Connected'
+      },
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -49,19 +68,22 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// 404 handler (for unmatched API routes)
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Route not found'
-  });
-});
+// Use main API router dengan prefix /api
+app.use('/api', apiRoutes);
 
-// Global error handler
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     error: 'Something went wrong!',
     message: err.message
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found'
   });
 });
 
@@ -73,9 +95,19 @@ async function startServer() {
       console.error('Failed to connect to database');
       process.exit(1);
     }
-
+    
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`📚 API Documentation available at:`);
+      console.log(`   - Auth: http://localhost:${PORT}/api/auth`);
+      console.log(`   - Recipes: http://localhost:${PORT}/api/recipes`);
+      console.log(`   - Profile: http://localhost:${PORT}/api/profile`);
+      console.log(`   - Communities: http://localhost:${PORT}/api/communities`);
+      console.log(`   - Notifications: http://localhost:${PORT}/api/notifications`);
+      console.log(`   - Reviews: http://localhost:${PORT}/api/reviews`);
+      console.log(`   - Home: http://localhost:${PORT}/api/home`);
+      console.log(`   - Search: http://localhost:${PORT}/api/search`);
+      console.log(`   - Trending: http://localhost:${PORT}/api/trending`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
