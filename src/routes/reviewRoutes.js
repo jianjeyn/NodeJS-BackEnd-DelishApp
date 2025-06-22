@@ -46,10 +46,10 @@ router.get('/test', (req, res) => {
   res.json({ 
     message: 'Review routes are working',
     available_routes: [
-      'POST /recipes/:recipeId/reviews - Create review',
-      'GET /recipes/:recipeId/reviews - Get reviews for recipe',
-      'PUT /reviews/:id - Update review (legacy)',
-      'DELETE /reviews/:id - Delete review (legacy)'
+      'POST /api/recipes/:recipeId/reviews - Create review',
+      'GET /api/recipes/:recipeId/reviews - Get reviews for recipe',
+      'PUT /api/reviews/:id - Update review (legacy)',
+      'DELETE /api/reviews/:id - Delete review (legacy)'
     ]
   });
 });
