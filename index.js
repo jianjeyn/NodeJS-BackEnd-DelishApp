@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const { connectDB, disconnectDB, prisma } = require('./config/database');
 
 // Load environment variables
 dotenv.config();
@@ -22,11 +23,46 @@ app.get('/', (req, res) => {
 });
 
 // Health check route
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString()
-  });
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connection
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      status: 'OK',
+      database: 'Connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'Error',
+      database: 'Disconnected',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Test route untuk ambil data users
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        username: true,
+        created_at: true
+      }
+    });
+    res.json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 });
 
 // Error handling middleware
@@ -38,7 +74,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler - Change this line to fix the path-to-regexp issue
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: 'Route not found'
@@ -46,6 +82,30 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+async function startServer() {
+  try {
+    await connectDB();
+    
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await disconnectDB();
+  process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await disconnectDB();
+  process.exit(0);
+});
+
+startServer();
