@@ -13,7 +13,7 @@ const index = async (req, res) => {
 
     // Get user data - sesuai dengan PHP: Auth::user()
     const getUserQuery = `
-      SELECT id, name, email, username, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      SELECT id, name, email, username, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
@@ -294,14 +294,14 @@ const following = async (req, res) => {
 // Update user profile - sesuai dengan PHP: ProfileController::update
 const update = async (req, res) => {
   try {
-    const { name, username, presentation, add_link } = req.body;
+    const { name, username} = req.body;
     const userId = req.user.id;
     
     console.log(`📝 Updating profile for user ID: ${userId}`);
 
     // Get current user data first
     const getCurrentUserQuery = `
-      SELECT id, name, email, username, foto, presentation, add_link
+      SELECT id, name, email, username, foto
       FROM users 
       WHERE id = ?
     `;
@@ -362,15 +362,15 @@ const update = async (req, res) => {
       params.push(username);
     }
 
-    if (presentation !== undefined) {
-      updateFields.push('presentation = ?');
-      params.push(presentation);
-    }
+    // if (presentation !== undefined) {
+    //   updateFields.push('presentation = ?');
+    //   params.push(presentation);
+    // }
 
-    if (add_link !== undefined) {
-      updateFields.push('add_link = ?');
-      params.push(add_link);
-    }
+    // if (add_link !== undefined) {
+    //   updateFields.push('add_link = ?');
+    //   params.push(add_link);
+    // }
 
     if (req.file) {
       updateFields.push('foto = ?');
@@ -390,7 +390,7 @@ const update = async (req, res) => {
 
     // Get updated user data
     const getUserQuery = `
-      SELECT id, name, email, username, no_hp, tanggal_lahir, gender, foto, presentation, add_link, created_at, updated_at
+      SELECT id, name, email, username, no_hp, tanggal_lahir, gender, foto, created_at, updated_at
       FROM users 
       WHERE id = ?
     `;
@@ -409,8 +409,6 @@ const update = async (req, res) => {
         updated_fields: {
           name: updatedUser.name,
           username: updatedUser.username,
-          presentation: updatedUser.presentation,
-          add_link: updatedUser.add_link,
           foto: updatedUser.foto ? `${process.env.BASE_URL || 'http://localhost:3000'}/uploads/user_foto/${path.basename(updatedUser.foto)}` : null
         }
       }
@@ -705,7 +703,7 @@ const getPublicProfile = async (req, res) => {
 
     // Get user data (exclude sensitive info) - sesuai dengan public profile
     const getUserQuery = `
-      SELECT id, name, username, foto, presentation, add_link, created_at
+      SELECT id, name, username, foto, created_at
       FROM users 
       WHERE id = ?
     `;
