@@ -1,28 +1,38 @@
-
 /*
-======================================================
-| File: src/routes/index.js (Router Utama)           |
-| Deskripsi: Menggabungkan semua file rute menjadi   |
-| satu router utama untuk diekspor ke app.js.        |
-======================================================
+================================================================
+|          FILE 7: Router Utama (Titik Pusat)                  |
+================================================================
+| Lokasi: src/routes/index.js                                  |
+| Deskripsi: Menggabungkan semua file rute menjadi satu.       |
+================================================================
 */
 const express = require('express');
 const router = express.Router();
 
-// Impor semua file rute
+// Import semua router
 const authRoutes = require('./authRoutes');
 const recipeRoutes = require('./recipeRoutes');
-const userRoutes = require('./userRoutes');
-const reviewRoutes = require('./reviewRoutes');
-const generalRoutes = require('./generalRoutes');
+const profileRoutes = require('./profileRoutes');
+const communityRoutes = require('./communityRoutes');
+const notificationRoutes = require('./notificationRoutes');
+const homePageController = require('../controllers/homePage.controller');
+const searchController = require('../controllers/searchController');
+const trendingController = require('../controllers/trendingController');
+const verifyToken = require('../middleware/verifyToken');
 
-// Daftarkan setiap rute dengan prefixnya masing-masing
+
+// Gunakan router berdasarkan prefix URL
 router.use('/auth', authRoutes);
 router.use('/recipes', recipeRoutes);
-router.use('/users', userRoutes); // Rute untuk profil, follow, dll.
-router.use('/reviews', reviewRoutes);
+router.use('/profile', profileRoutes);
+router.use('/communities', communityRoutes);
+router.use('/notifications', notificationRoutes);
 
-// Untuk rute umum seperti /home, /search
-router.use('/', generalRoutes);
+// Rute-rute umum
+router.get('/home', verifyToken, homePageController.index); // Memerlukan auth untuk 'your_recipes'
+router.get('/search', searchController.searchPage);
+router.get('/trending', trendingController.index);
+router.get('/trending/:id', trendingController.show);
+
 
 module.exports = router;
