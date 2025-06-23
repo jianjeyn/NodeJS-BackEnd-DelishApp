@@ -87,6 +87,9 @@ app.use((req, res) => {
   });
 });
 
+// Static files untuk uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Start server
 async function startServer() {
   try {
